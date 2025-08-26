@@ -1,5 +1,4 @@
-// game.js - Clean / fixed version (replace your old game.js with this)
-// Works on laptop + mobile. Uses svg.png (place it next to index.html).
+
 
 window.addEventListener('load', () => {
   // --- DOM elements (safe lookups) ---
@@ -11,12 +10,36 @@ window.addEventListener('load', () => {
   const backBtn = document.getElementById('backBtn');
   const scoreText = document.getElementById('score');
 
-  const mobileControls = document.getElementById('mobileControls');
+
   const leftBtn = document.getElementById('leftBtn');
+leftBtn.addEventListener('click', function() {
+  // Create a KeyboardEvent for the left arrow key
+  const event = new KeyboardEvent('keydown', {
+    key: 'ArrowLeft',
+    keyCode: 37,
+    code: 'ArrowLeft',
+    which: 37,
+    bubbles: true
+  });
+  document.dispatchEvent(event);
+});
+
   const rightBtn = document.getElementById('rightBtn');
+  rightBtn.addEventListener('click', function() {
+  const event = new KeyboardEvent('keydown', {
+    key: 'ArrowRight',
+    keyCode: 39,
+    code: 'ArrowRight',
+    which: 39,
+    bubbles: true
+  });
+  document.dispatchEvent(event);
+});
 
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
+
+  const footer = document.querySelector('footer');
 
   // --- Images / assets ---
   const carImg = new Image();
@@ -33,7 +56,7 @@ window.addEventListener('load', () => {
   let score = 0;
   let obstacles = [];
   let spawnChance = 0.02;
-  let obstacleSpeed = 2;
+  let obstacleSpeed = 1.5;
   let animationId = null;
 
   // --- Helpers ---
@@ -45,11 +68,11 @@ window.addEventListener('load', () => {
     stopGame();
     menu.classList.remove('hidden');
     gameArea.classList.add('hidden');
-    if (mobileControls) mobileControls.classList.add('hidden');
   }
 
   function backToMenu() {
     showMenu();
+    footer.hidden = false;
   }
 
   // --- Buttons ---
@@ -67,11 +90,17 @@ window.addEventListener('load', () => {
   function startMode(m) {
     mode = m;
     if (mode === 'normal') {
-      obstacleSpeed = 2;
+      obstacleSpeed = 1.5;
       spawnChance = 0.015;
+      leftBtn.hidden = false;
+      rightBtn.hidden = false;
+      footer.hidden = true;
     } else {
-      obstacleSpeed = 4;
+      obstacleSpeed = 5;
       spawnChance = 0.03;
+      leftBtn.hidden = false;
+      rightBtn.hidden = false;
+      footer.hidden = true;
     }
     score = 0;
     scoreText.textContent = `Score: ${score}`;
@@ -79,11 +108,7 @@ window.addEventListener('load', () => {
     obstacles = [];
     menu.classList.add('hidden');
     gameArea.classList.remove('hidden');
-    // show mobile controls on small screens
-    if (mobileControls) {
-      if (window.innerWidth < 768) mobileControls.classList.remove('hidden');
-      else mobileControls.classList.add('hidden');
-    }
+
     running = true;
     paused = false;
     // start loop only if image is loaded, else wait for onload:
@@ -99,7 +124,6 @@ window.addEventListener('load', () => {
     paused = false;
     if (animationId) cancelAnimationFrame(animationId);
     animationId = null;
-    if (mobileControls) mobileControls.classList.add('hidden');
   }
 
   // --- Main loop ---
@@ -117,11 +141,11 @@ window.addEventListener('load', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // background
-    ctx.fillStyle = (mode === 'normal') ? 'lightblue' : 'black';
+    ctx.fillStyle = (mode === 'normal') ? 'lightblue' : '#222';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // road
-    ctx.fillStyle = (mode === 'normal') ? '#666' : '#222';
+    ctx.fillStyle = (mode === 'normal') ? '#666' : '#666';
     ctx.fillRect(ROAD_LEFT, 0, ROAD_WIDTH, canvas.height);
 
     // dashed center line
@@ -150,7 +174,7 @@ window.addEventListener('load', () => {
     }
 
     // update obstacles (iterate backwards)
-    for (let i = obstacles.length - 1; i >= 0; i--) {
+    for (let i = obstacles.length - 4; i >= 0; i--) {
       const obs = obstacles[i];
       obs.y += obstacleSpeed;
 
@@ -194,10 +218,12 @@ window.addEventListener('load', () => {
     animationId = requestAnimationFrame(loop);
   }
 
+
+
   function drawPaused() {
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillStyle = 'rgba(147, 201, 29, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.font = '28px Trebuchet MS';
     ctx.fillText('PAUSED', canvas.width / 2 - 60, canvas.height / 2);
   }
@@ -216,27 +242,7 @@ window.addEventListener('load', () => {
     }
   });
 
-  // --- Mobile touch buttons (tap & hold) ---
-  let holdInterval = null;
-  function startHold(dir) {
-    stopHold();
-    holdInterval = setInterval(() => {
-      if (!running) return;
-      if (dir === 'left') car.x = Math.max(ROAD_LEFT, car.x - 12);
-      else car.x = Math.min(ROAD_LEFT + ROAD_WIDTH - car.width, car.x + 12);
-    }, 60);
-  }
-  function stopHold() {
-    if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
-  }
-  if (leftBtn && rightBtn) {
-    leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold('left'); });
-    rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold('right'); });
-    leftBtn.addEventListener('touchend', stopHold);
-    rightBtn.addEventListener('touchend', stopHold);
-    leftBtn.addEventListener('touchcancel', stopHold);
-    rightBtn.addEventListener('touchcancel', stopHold);
-  }
+
 
   // --- Helpful: expose a quick debug function in case user needs it ---
   window.__gameDebug = {
